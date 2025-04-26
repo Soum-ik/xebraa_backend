@@ -7,7 +7,6 @@ import AppError from "../errors/AppError";
 
 import catchAsync from "../utils/catchAsync";
 import User from "../modules/auth/auth.model";
-import { Types } from "mongoose";
 
 export type DecodedToken = {
   id: number;
@@ -18,8 +17,7 @@ export type DecodedToken = {
 
 const auth = () => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization;
-
+    const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized Access");
     }
@@ -29,24 +27,19 @@ const auth = () => {
       config.jwt_access_secret as string
     ) as JwtPayload;
 
-
-    console.log(decoded, "decoded in auth middleware");
-    
-
     const findUser = await User.findById(decoded.userId);
-    console.log(findUser, "findUser in auth middleware");
     
     if (!findUser) {
       throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized Access");
     }
 
     const payload = {
-      id: decoded.userId, // or string if you convert it,
+      id: decoded.userId,
       email: decoded.email,
       name: decoded.name,
-    } as DecodedToken; // Cast to DecodedToken type
+    } as DecodedToken; 
 
-    req.user = payload as DecodedToken; // Cast to any to avoid TypeScript error
+    req.user = payload as DecodedToken;  
     next();
   });
 };
